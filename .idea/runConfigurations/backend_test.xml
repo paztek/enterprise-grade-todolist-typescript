@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="backend:test" type="mocha-javascript-test-runner">
+    <node-interpreter>project</node-interpreter>
+    <node-options />
+    <mocha-package>$PROJECT_DIR$/services/backend/node_modules/mocha</mocha-package>
+    <working-directory>$PROJECT_DIR$/services/backend</working-directory>
+    <pass-parent-env>true</pass-parent-env>
+    <envs>
+      <env name="NODE_ENV" value="test" />
+    </envs>
+    <ui>bdd</ui>
+    <extra-mocha-options />
+    <test-kind>PATTERN</test-kind>
+    <test-pattern>**/*.test.ts</test-pattern>
+    <method v="2" />
+  </configuration>
+</component>

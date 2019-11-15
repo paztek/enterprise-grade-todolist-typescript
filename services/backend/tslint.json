@@ -1,0 +1,10 @@
+{
+    "extends": [
+        "tslint:latest",
+        "tslint-config-prettier",
+        "tslint-no-unused-expression-chai"
+    ],
+    "rules": {
+        "no-implicit-dependencies": [true, "dev"]
+    }
+}

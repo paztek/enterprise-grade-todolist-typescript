@@ -1,0 +1,5 @@
+--exit
+--timeout 10000
+--require ts-node/register/transpile-only
+--require test/bootstrap.ts
+--colors
