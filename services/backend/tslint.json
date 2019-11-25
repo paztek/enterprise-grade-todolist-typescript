@@ -5,6 +5,7 @@
         "tslint-no-unused-expression-chai"
     ],
     "rules": {
-        "no-implicit-dependencies": [true, "dev"]
+        "no-implicit-dependencies": [true, "dev"],
+        "object-literal-sort-keys": [false]
     }
 }

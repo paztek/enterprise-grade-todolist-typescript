@@ -1,34 +1,25 @@
 import { InitOptions, Model, ModelAttributes, ModelCtor, ModelOptions, Options, Sequelize } from 'sequelize';
+import { inject, injectable } from 'tsyringe';
 
 import Service, { IService } from '../lib/service';
-import logger from '../logger';
-import { IDBConfig } from './config';
+import { ILogger } from '../logger';
 
 // tslint:disable-next-line:no-empty-interface
 export interface IDBService extends IService {
 }
 
+@injectable()
 export default class DBService extends Service implements IDBService {
 
-    public readonly sequelize: Sequelize;
-
     constructor(
-        private config: IDBConfig,
+        @inject('sequelize') private readonly sequelize: Sequelize,
+        @inject('logger') private readonly logger: ILogger,
     ) {
         super();
-
-        // Create and configure sequelize
-        const SEQUELIZE_OPTIONS: Options = {
-            define: {
-                underscored: true,
-            },
-            logging: function log(...args: any[]) { logger.debug(args); },
-        };
-        this.sequelize = new Sequelize(this.config.uri, SEQUELIZE_OPTIONS);
     }
 
     public async start(): Promise<void> {
-        logger.info('Connecting to Postgres database...');
+        this.logger.info('Connecting to Postgres database...');
 
         super.init();
 
@@ -36,14 +27,14 @@ export default class DBService extends Service implements IDBService {
 
         // TODO Register models (injected via @injectAll)
 
-        logger.info('Connected to Postgres database');
+        this.logger.info('Connected to Postgres database');
     }
 
     public async stop(): Promise<void> {
-        logger.info('Disconnecting from Postgres database...');
+        this.logger.info('Disconnecting from Postgres database...');
 
         await this.sequelize.close();
 
-        logger.info('Disconnected from Postgres database');
+        this.logger.info('Disconnected from Postgres database');
     }
 }

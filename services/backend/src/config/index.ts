@@ -12,6 +12,10 @@ const config: IConfig = {
     http: {
         port: ENV.PORT ? parseInt(ENV.PORT, 10) : 3000,
     },
+
+    db: {
+        uri: ENV.DATABASE_URI || 'postgres://localhost:5432/todos_dev',
+    },
 };
 
 export default config;

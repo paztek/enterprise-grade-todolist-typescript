@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="migrate:down:test" type="js.build_tools.npm" folderName="migrations">
+    <package-json value="$PROJECT_DIR$/services/backend/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="migrate:down" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs>
+      <env name="NODE_ENV" value="test" />
+      <env name="DATABASE_URI" value="postgres://localhost:5432/todos_test" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

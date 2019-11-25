@@ -1,21 +1,58 @@
 // tslint:disable-next-line:no-implicit-dependencies
+import express from 'express';
 import 'reflect-metadata';
+import { Sequelize } from 'sequelize';
 import { container } from 'tsyringe';
 
 import globalConfig from './config';
+import DBService from './db';
+import TodosFeature from './features/todos';
 import HTTPService from './http/service';
-import Server from './server';
+import { FeaturesConfig } from './lib/feature';
+import Server from './lib/server';
+import logger from './logger';
+import CommentsFeature from './features/todos/comments';
 
-const { http } = globalConfig;
+const { http, db } = globalConfig;
 
-// Wire up services
+// ---------------- Wire up services ----------------
+
+// Dependencies
+container.register('logger', {
+    useValue: logger,
+});
+
+const app = express();
+app.set('port', http.port);
+container.register('express', {
+    useValue: app,
+});
+
+const sequelize = new Sequelize(db.uri, {
+    define: {
+        underscored: true,
+    },
+    logging: function log(message) { logger.debug(message); },
+});
+container.register('sequelize', {
+    useValue: sequelize,
+});
+
 container.register('http', {
-    useValue: new HTTPService(http),
+    useClass: HTTPService,
 });
-container.register('provider', {
-    useValue: new HTTPService(http),
+container.register('db', {
+    useClass: DBService,
 });
+
+// Features
+const featuresConfig: FeaturesConfig = [
+    {
+        feature: TodosFeature,
+        children: [CommentsFeature],
+    },
+];
 
 const server = container.resolve(Server);
-
+server.resolveFeatures(featuresConfig);
 server.start();
