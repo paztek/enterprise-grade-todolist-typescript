@@ -1,8 +1,8 @@
 import { inject, injectable } from 'tsyringe';
 
-import { ITodo } from '../model';
-import { IComment } from './comment';
-import CommentProvider from './provider';
+import { ITodo } from '../../model';
+import { IComment } from '../model';
+import CommentProvider from '../provider';
 
 @injectable()
 export default class CommentService {

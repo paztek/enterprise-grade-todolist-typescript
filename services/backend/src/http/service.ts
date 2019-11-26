@@ -1,9 +1,9 @@
 /* tslint:disable:max-classes-per-file */
 import bodyParser from 'body-parser';
-import express, { Express, NextFunction, Request, Response, Router } from 'express';
+import express, { Express, IRouter, NextFunction, Request, Response, Router } from 'express';
 import http, {Server} from 'http';
 import morgan from 'morgan';
-import { inject, injectable } from 'tsyringe';
+import { container, inject, injectable } from 'tsyringe';
 
 import { HTTPError } from '../lib/http/errors';
 import Service, { IService } from '../lib/service';
@@ -11,7 +11,7 @@ import { ILogger } from '../logger';
 
 // tslint:disable-next-line:no-empty-interface
 export interface IHTTPService extends IService {
-    mountRouter(path: string, router: Router): void;
+    //mount(parentRouter: IRouter, path: string, router: IRouter): void;
 }
 
 @injectable()
@@ -29,11 +29,13 @@ export default class HTTPService extends Service implements IHTTPService {
         this.app.use(morgan('combined', { stream: { write: logger.info.bind(logger) } }));
         this.app.use(bodyParser.json());
 
-        this.server = http.createServer(this.app);
-    }
+        const router = Router({ mergeParams: true });
+        this.app.use('', router);
 
-    public async start(): Promise<void> {
-        this.logger.info('Starting HTTP server...');
+        // Register the router so that it can be injected into features and features can mount nested routes
+        container.register('/', {
+            useValue: router,
+        });
 
         // Catch 404 and forward to error handler
         this.app.use(() => {
@@ -49,8 +51,13 @@ export default class HTTPService extends Service implements IHTTPService {
             res.status(err.status || 500).json(err);
         });
 
-        const port = this.app.get('port');
+        this.server = http.createServer(this.app);
+    }
 
+    public async start(): Promise<void> {
+        this.logger.info('Starting HTTP server...');
+
+        const port = this.app.get('port');
         await new Promise((resolve, reject) => this.server.listen(port, resolve).on('error', reject));
 
         this.logger.info(`HTTP server started on port ${port}`);
@@ -62,9 +69,5 @@ export default class HTTPService extends Service implements IHTTPService {
         this.server.close();
 
         this.logger.info('HTTP server stopped');
-    }
-
-    public mountRouter(path: string, router: Router): void {
-        this.app.use(path, router);
     }
 }

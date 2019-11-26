@@ -4,6 +4,6 @@ export interface ITodo {
     id: UUID;
     label: string;
     done: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }

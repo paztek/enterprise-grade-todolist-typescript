@@ -1,4 +1,5 @@
 /* tslint:disable:max-classes-per-file */
+import * as _ from 'lodash';
 import { DataTypes, Model, ModelAttributes, ModelOptions, Sequelize } from 'sequelize';
 import { inject, injectable } from 'tsyringe';
 
@@ -10,6 +11,7 @@ const mapping: ModelAttributes = {
     id: {
         primaryKey: true,
         type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
     },
     label: {
         type: DataTypes.STRING,
@@ -47,17 +49,43 @@ export default class TodoProvider {
         TodoModel.init(mapping, { ...options, sequelize });
     }
 
+    public async findOne(id: UUID): Promise<ITodo | null> {
+        const instance = await TodoModel.findByPk(id);
+
+        return instance ? this.convertInstanceToBusinessObject(instance) : null;
+    }
+
     public async findAll(): Promise<ITodo[]> {
         const instances = await TodoModel.findAll();
 
         return instances.map(this.convertInstanceToBusinessObject);
     }
 
-    public async create(label: string, done: boolean): Promise<ITodo> {
-        const attributes = { label, done };
+    public destroyAll(): Promise<number> {
+        return TodoModel.destroy({ where: {} });
+    }
+
+    public async create(todo: ITodo): Promise<ITodo> {
+        const attributes = this.convertBusinessObjectToAttributes(todo);
         const instance = await TodoModel.create(attributes);
 
         return this.convertInstanceToBusinessObject(instance);
+    }
+
+    public async update(todo: ITodo, label?: string, done?: boolean): Promise<ITodo> {
+        const instance = await TodoModel.findByPk(todo.id, { rejectOnEmpty: true });
+
+        const attributes = _.omitBy({ label, done },  _.isUndefined);
+        instance.set(attributes);
+        await instance.save();
+
+        return this.convertInstanceToBusinessObject(instance);
+    }
+
+    public async delete(todo: ITodo): Promise<void> {
+        const instance = await TodoModel.findByPk(todo.id, { rejectOnEmpty: true });
+
+        return instance.destroy();
     }
 
     protected convertInstanceToBusinessObject(instance: TodoModel): ITodo {
@@ -70,7 +98,7 @@ export default class TodoProvider {
         };
     }
 
-    protected convertBusinessObjectToAttributes(todo: ITodo): any {
+    protected convertBusinessObjectToAttributes(todo: ITodo): any { // TODO Better typings
         return {
             label: todo.label,
             done: todo.done,

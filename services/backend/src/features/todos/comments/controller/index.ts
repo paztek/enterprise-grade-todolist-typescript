@@ -1,9 +1,9 @@
 import { boundMethod } from 'autobind-decorator';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
-import { ITodoRequest } from '../controller';
-import CommentService from './service';
+import { ITodoRequest } from '../../controller';
+import CommentService from '../service';
 
 @injectable()
 export default class CommentController {
