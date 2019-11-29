@@ -4,11 +4,11 @@ import { inject, injectable } from 'tsyringe';
 
 import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
-import { ITodo } from '../model';
+import { Todo } from '../model';
 import { TodoModel } from '../provider';
 import { IComment } from './model';
 
-const mapping: ModelAttributes = {
+const modelMapping: ModelAttributes = {
     id: {
         primaryKey: true,
         type: DataTypes.UUID,
@@ -20,7 +20,7 @@ const mapping: ModelAttributes = {
     },
 };
 
-const options: ModelOptions = {
+const modelOptions: ModelOptions = {
     modelName: 'Comment',
     tableName: 'comments',
     underscored: true,
@@ -43,11 +43,11 @@ export default class CommentProvider {
     ) {
         logger.info('Initializing Sequelize mode Comment');
 
-        CommentModel.init(mapping, { ...options, sequelize });
+        CommentModel.init(modelMapping, { ...modelOptions, sequelize });
         CommentModel.belongsTo(TodoModel, { foreignKey: { name: 'todoId', field: 'todo_id' }, targetKey: 'id' });
     }
 
-    public async findAll(todo: ITodo): Promise<IComment[]> {
+    public async findAll(todo: Todo): Promise<IComment[]> {
         const instances = await CommentModel.findAll({
             where: {
                 todoId: todo.id,
@@ -57,7 +57,7 @@ export default class CommentProvider {
         return instances.map(this.convertInstanceToBusinessObject);
     }
 
-    public async create(todo: ITodo, comment: IComment): Promise<IComment> {
+    public async create(todo: Todo, comment: IComment): Promise<IComment> {
         const attributes = this.convertBusinessObjectToAttributes(todo, comment);
         const instance = await CommentModel.create(attributes);
 
@@ -72,7 +72,7 @@ export default class CommentProvider {
         };
     }
 
-    private convertBusinessObjectToAttributes(todo: ITodo, comment: IComment): any { // TODO Better typings
+    private convertBusinessObjectToAttributes(todo: Todo, comment: IComment): any { // TODO Better typings
         return {
             todoId: todo.id,
             text: comment.text,

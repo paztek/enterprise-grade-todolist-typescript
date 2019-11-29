@@ -12,6 +12,7 @@ import { FeaturesConfig } from './lib/feature';
 import Server from './lib/server';
 import logger from './logger';
 import CommentsFeature from './features/todos/comments';
+import TagsFeature from './features/tags';
 
 const { http, db } = globalConfig;
 
@@ -51,6 +52,7 @@ const featuresConfig: FeaturesConfig = [
         feature: TodosFeature,
         children: [CommentsFeature],
     },
+    TagsFeature,
 ];
 
 const server = container.resolve(Server);

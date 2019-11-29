@@ -1,4 +1,15 @@
+/* tslint:disable:max-classes-per-file */
 import * as _ from 'lodash';
+
+import { UUID } from '../utils/uuid';
+
+export class ResourceNotFoundError extends Error {
+
+    constructor(id: UUID) {
+        const message = `Resource with ID ${id} not found`;
+        super(message);
+    }
+}
 
 export class InvalidResourceError extends Error {
 

@@ -1,15 +1,15 @@
 import uuid from 'uuid';
 
-import { ITodo } from './model';
+import { Todo } from './model';
 
-export default function build(attributes: Partial<ITodo> = {}): ITodo {
+export default function build(attributes: Partial<Todo> = {}): Todo {
     return { ...getDefaultAttributes(), ...attributes };
 }
 
-function getDefaultAttributes(): ITodo {
+function getDefaultAttributes(): Todo {
     return {
-        id: uuid(),
         label: 'Todo',
         done: false,
+        tags: [],
     }
 }

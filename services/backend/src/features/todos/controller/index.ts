@@ -3,19 +3,20 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
 import { UUID } from '../../../lib/utils/uuid';
-import { ITodo } from '../model';
+import { Todo } from '../model';
 import TodoService from '../service';
 import { TodoInvalidError } from '../service/errors';
 import { TodoHTTPBadRequestError, TodoHTTPNotFoundError } from './errors';
 
 export interface ITodoRequest extends Request {
-    todo: ITodo;
+    todo: Todo;
 }
 
 export interface ITodoCreateRequest extends Request {
     body: {
         label: string;
         done?: boolean;
+        tags?: string[];
     };
 }
 
@@ -23,6 +24,7 @@ export interface ITodoUpdateRequest extends ITodoRequest {
     body: {
         label?: string;
         done?: boolean;
+        tags?: string[];
     };
 }
 
@@ -55,10 +57,10 @@ export default class TodoController {
 
     @boundMethod
     public async create(req: ITodoCreateRequest, res: Response): Promise<Response> {
-        const { label, done } = req.body;
+        const { label, done, tags } = req.body;
 
         try {
-            const todo = await this.service.createTodo(label, done);
+            const todo = await this.service.createTodo(label, done, tags);
             return res.status(201).json(todo);
         } catch (err) {
             if (err instanceof TodoInvalidError) {
@@ -76,12 +78,12 @@ export default class TodoController {
 
     @boundMethod
     public async update(req: ITodoUpdateRequest, res: Response): Promise<Response> {
-        const { label, done } = req.body;
+        const { label, done, tags } = req.body;
 
         let todo = req.todo;
 
         try {
-            todo = await this.service.updateTodo(todo, label, done);
+            todo = await this.service.updateTodo(todo, label, done, tags);
             return res.status(200).json(todo);
         } catch (err) {
             if (err instanceof TodoInvalidError) {

@@ -1,5 +1,6 @@
+/* tslint:disable:no-var-requires */
 import * as chai from 'chai';
 import 'reflect-metadata';
 
-// tslint:disable-next-line:no-var-requires
 chai.use(require('sinon-chai'));
+chai.use(require('chai-as-promised'));

@@ -11,8 +11,9 @@ import HTTPService from '../../../http/service';
 import { FeaturesConfig } from '../../../lib/feature';
 import logger from '../../../logger';
 import Server from '../../../server';
+import TagsFeature from '../../tags';
 import buildTodo from '../factory';
-import { ITodo } from '../model';
+import { Todo } from '../model';
 import TodoProvider from '../provider';
 import CommentsFeature from './';
 import build from './factory';
@@ -20,13 +21,13 @@ import CommentProvider from './provider';
 
 const { http, db } = globalConfig;
 
-describe('Comments E2E', () => {
+xdescribe('Comments E2E', () => {
 
     let server: Server;
     let app: Express;
 
-    let todo1: ITodo;
-    let todo2: ITodo;
+    let todo1: Todo;
+    let todo2: Todo;
 
     let todoProvider: TodoProvider;
     let commentProvider: CommentProvider;
@@ -68,6 +69,7 @@ describe('Comments E2E', () => {
                     CommentsFeature,
                 ],
             },
+            TagsFeature,
         ];
 
         server = container.resolve(Server);
@@ -96,7 +98,8 @@ describe('Comments E2E', () => {
 
     describe('GET /todos/:id/comments', () => {
 
-        it('should return a HTTP 200 with the comments', async () => {const comment11 = build({ text: 'Comment 11' });
+        it('should return a HTTP 200 with the comments', async () => {
+            const comment11 = build({ text: 'Comment 11' });
             await commentProvider.create(todo1, comment11);
             const comment12 = build({ text: 'Comment 12' });
             await commentProvider.create(todo1, comment12);

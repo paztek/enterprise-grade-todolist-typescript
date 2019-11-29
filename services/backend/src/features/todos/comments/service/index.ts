@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 
-import { ITodo } from '../../model';
+import { Todo } from '../../model';
 import { IComment } from '../model';
 import CommentProvider from '../provider';
 
@@ -11,7 +11,7 @@ export default class CommentService {
         @inject(CommentProvider) private readonly provider: CommentProvider,
     ) {}
 
-    public async getList(todo: ITodo): Promise<IComment[]> {
+    public async getList(todo: Todo): Promise<IComment[]> {
         return this.provider.findAll(todo);
     }
 }
