@@ -79,9 +79,17 @@ export default class TodoController {
         const { label, done } = req.body;
 
         let todo = req.todo;
-        todo = await this.service.updateTodo(todo, label, done);
 
-        return res.json(todo);
+        try {
+            todo = await this.service.updateTodo(todo, label, done);
+            return res.status(200).json(todo);
+        } catch (err) {
+            if (err instanceof TodoInvalidError) {
+                err = new TodoHTTPBadRequestError(err.message, err.errors);
+            }
+
+            throw err;
+        }
     }
 
     @boundMethod

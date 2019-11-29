@@ -1,4 +1,4 @@
-import winston from 'winston';
+import winston, { format } from 'winston';
 
 import globalConfig from '../config';
 

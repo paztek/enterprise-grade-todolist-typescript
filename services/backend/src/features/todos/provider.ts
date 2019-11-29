@@ -87,9 +87,17 @@ export default class TodoProvider {
 
         const attributes = _.omitBy({ label, done },  _.isUndefined);
         instance.set(attributes);
-        await instance.save();
 
-        return this.convertInstanceToBusinessObject(instance);
+        try {
+            await instance.save();
+            return this.convertInstanceToBusinessObject(instance);
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                err = new InvalidResourceError(err.message, err.errors);
+            }
+
+            throw err;
+        }
     }
 
     public async delete(todo: ITodo): Promise<void> {

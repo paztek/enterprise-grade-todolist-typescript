@@ -1,7 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 
 import { InvalidResourceError } from '../../../lib/provider/errors';
+import { logError } from '../../../lib/utils/logging/error';
 import { UUID } from '../../../lib/utils/uuid';
+import { ILogger } from '../../../logger';
 import build from '../factory';
 import { ITodo } from '../model';
 import TodoProvider from '../provider';
@@ -12,6 +14,7 @@ export default class TodoService {
 
     constructor(
         @inject(TodoProvider) private readonly provider: TodoProvider,
+        @inject('logger') private readonly logger: ILogger,
     ) {}
 
     public async getTodo(id: UUID): Promise<ITodo | null> {
@@ -28,6 +31,7 @@ export default class TodoService {
         return this.provider.findAll();
     }
 
+    @logError()
     public async createTodo(label: string, done: boolean = false): Promise<ITodo> {
         const todo: ITodo = build({
             label,
@@ -45,8 +49,17 @@ export default class TodoService {
         }
     }
 
+    @logError()
     public async updateTodo(todo: ITodo, label?: string, done?: boolean): Promise<ITodo> {
-        return this.provider.update(todo, label, done);
+        try {
+            return await this.provider.update(todo, label, done);
+        } catch (err) {
+            if (err instanceof InvalidResourceError) {
+                err = new TodoInvalidError('Invalid data', err.errors);
+            }
+
+            throw err;
+        }
     }
 
     public async deleteTodo(todo: ITodo): Promise<void> {

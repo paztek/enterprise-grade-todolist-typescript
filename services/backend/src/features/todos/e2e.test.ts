@@ -135,6 +135,22 @@ describe('Todos E2E', () => {
 
     describe('PUT /todos/:todoId', () => {
 
+        it('should throw a HTTP 400 in case of invalid data', async () => {
+            let todo = build();
+            todo = await todoProvider.create(todo);
+
+            const data = {
+                label: null,
+            };
+
+            const response = await request(app)
+                .put(`/todos/${todo.id}`)
+                .send(data);
+
+            expect(response.status).to.eq(400);
+            expect(response.body.message).to.not.be.undefined;
+        });
+
         it('should return a HTTP 200 with the updated todo', async () => {
             let todo = build();
             todo = await todoProvider.create(todo);
