@@ -23,9 +23,6 @@ export default class CommentsFeature extends Feature {
         // Register routes
         const router = Router({ mergeParams: true });
 
-        const todoService = container.resolve(TodoService);
-        router.param('todoId', createMiddleware(todoService));
-
         router.get('/', asyncMiddleware(controller.index));
 
         parentRouter.use('/:todoId/comments', router);

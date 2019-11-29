@@ -1,11 +1,12 @@
 /* tslint:disable:max-classes-per-file */
 import * as _ from 'lodash';
-import { DataTypes, Model, ModelAttributes, ModelOptions, Sequelize } from 'sequelize';
+import { DataTypes, Model, ModelAttributes, ModelOptions, Sequelize, ValidationError } from 'sequelize';
 import { inject, injectable } from 'tsyringe';
 
 import { UUID } from '../../lib/utils/uuid';
 import { ILogger } from '../../logger';
 import { ITodo } from './model';
+import { InvalidResourceError } from '../../lib/provider/errors';
 
 const mapping: ModelAttributes = {
     id: {
@@ -45,7 +46,7 @@ export default class TodoProvider {
         @inject('logger') logger: ILogger,
         @inject('sequelize') sequelize: Sequelize,
     ) {
-        logger.info('Initializing Sequelize mode Todo');
+        logger.info('Initializing Sequelize model Todo');
         TodoModel.init(mapping, { ...options, sequelize });
     }
 
@@ -67,9 +68,18 @@ export default class TodoProvider {
 
     public async create(todo: ITodo): Promise<ITodo> {
         const attributes = this.convertBusinessObjectToAttributes(todo);
-        const instance = await TodoModel.create(attributes);
 
-        return this.convertInstanceToBusinessObject(instance);
+        try {
+            const instance = await TodoModel.create(attributes);
+            return this.convertInstanceToBusinessObject(instance);
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                err = new InvalidResourceError(err.message, err.errors);
+            }
+
+            throw err;
+        }
+
     }
 
     public async update(todo: ITodo, label?: string, done?: boolean): Promise<ITodo> {

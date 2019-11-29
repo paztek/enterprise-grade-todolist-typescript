@@ -3,9 +3,10 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
 import { UUID } from '../../../lib/utils/uuid';
-import { TodoHTTPNotFoundError } from './errors';
 import { ITodo } from '../model';
 import TodoService from '../service';
+import { TodoInvalidError } from '../service/errors';
+import { TodoHTTPBadRequestError, TodoHTTPNotFoundError } from './errors';
 
 export interface ITodoRequest extends Request {
     todo: ITodo;
@@ -56,8 +57,16 @@ export default class TodoController {
     public async create(req: ITodoCreateRequest, res: Response): Promise<Response> {
         const { label, done } = req.body;
 
-        const todo = await this.service.createTodo(label, done);
-        return res.status(201).json(todo);
+        try {
+            const todo = await this.service.createTodo(label, done);
+            return res.status(201).json(todo);
+        } catch (err) {
+            if (err instanceof TodoInvalidError) {
+                err = new TodoHTTPBadRequestError(err.message, err.errors);
+            }
+
+            throw err;
+        }
     }
 
     @boundMethod

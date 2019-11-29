@@ -1,10 +1,11 @@
 import { inject, injectable } from 'tsyringe';
 
+import { InvalidResourceError } from '../../../lib/provider/errors';
 import { UUID } from '../../../lib/utils/uuid';
 import build from '../factory';
 import { ITodo } from '../model';
 import TodoProvider from '../provider';
-import { TodoNotFoundError } from './errors';
+import { TodoInvalidError, TodoNotFoundError } from './errors';
 
 @injectable()
 export default class TodoService {
@@ -27,13 +28,21 @@ export default class TodoService {
         return this.provider.findAll();
     }
 
-    public createTodo(label: string, done: boolean = false): Promise<ITodo> {
+    public async createTodo(label: string, done: boolean = false): Promise<ITodo> {
         const todo: ITodo = build({
             label,
             done,
         });
 
-        return this.provider.create(todo);
+        try {
+            return await this.provider.create(todo);
+        } catch (err) {
+            if (err instanceof InvalidResourceError) {
+                err = new TodoInvalidError('Invalid data', err.errors);
+            }
+
+            throw err;
+        }
     }
 
     public async updateTodo(todo: ITodo, label?: string, done?: boolean): Promise<ITodo> {

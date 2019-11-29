@@ -5,9 +5,12 @@ import http, {Server} from 'http';
 import morgan from 'morgan';
 import { container, inject, injectable } from 'tsyringe';
 
+import globalConfig from '../config';
 import { HTTPError } from '../lib/http/errors';
 import Service, { IService } from '../lib/service';
 import { ILogger } from '../logger';
+
+const { environment } = globalConfig;
 
 // tslint:disable-next-line:no-empty-interface
 export interface IHTTPService extends IService {
@@ -48,7 +51,17 @@ export default class HTTPService extends Service implements IHTTPService {
                 this.logger.error(err.stack);
             }
 
-            res.status(err.status || 500).json(err);
+            const status = err.status || 500;
+            const stack = environment === 'production' ? undefined : err.stack;
+
+            const data = {
+                status,
+                message: err.message,
+                content: err.content,
+                stack,
+            };
+
+            res.status(status).json(data);
         });
 
         this.server = http.createServer(this.app);

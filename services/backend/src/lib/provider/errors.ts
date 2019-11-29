@@ -1,22 +1,17 @@
-/* tslint:disable:max-classes-per-file */
-import { UUID } from '../../../lib/utils/uuid';
+import * as _ from 'lodash';
 
-export class TodoNotFoundError extends Error {
+export class InvalidResourceError extends Error {
 
-    constructor(
-        public readonly todoId: UUID,
-    ) {
-        super(`Todo ${todoId} not found`);
-    }
-}
-
-export class TodoInvalidError extends Error {
+    public readonly errors: IValidationErrorItem[];
 
     constructor(
         message: string,
-        public readonly errors: IValidationErrorItem[],
+        errors: IValidationErrorItem[],
     ) {
         super(message);
+
+        // Rebuild the errors to make sure only the message, type, path & value keys are present
+        this.errors = errors.map((error) => _.pick(error, ['message', 'type', 'path', 'value']));
     }
 }
 

@@ -15,7 +15,8 @@ export class HTTPError extends Error {
 
     constructor(
         public readonly status: HTTPStatus,
-        message: string
+        public readonly message: string,
+        public content?: any,
     ) {
         super(message);
     }
@@ -24,8 +25,19 @@ export class HTTPError extends Error {
 export class HTTPNotFoundError extends HTTPError {
 
     constructor(
-        message: string
+        message: string,
+        content?: any
     ) {
-        super(HTTPStatus.NotFound, message);
+        super(HTTPStatus.NotFound, message, content);
+    }
+}
+
+export class HTTPBadRequestError extends HTTPError {
+
+    constructor(
+        message: string,
+        content?: any
+    ) {
+        super(HTTPStatus.BadRequest, message, content);
     }
 }
