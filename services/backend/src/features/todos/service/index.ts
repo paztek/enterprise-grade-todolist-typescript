@@ -5,10 +5,10 @@ import { logError } from '../../../lib/utils/logging/error';
 import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
 import { Tag } from '../../tags/model';
-import build from '../factory';
-import { PersistedTodo, Todo } from '../model';
+import { build as buildTodo, PersistedTodo, Todo } from '../model/todo';
 import TodoProvider from '../provider';
 import { TodoInvalidError, TodoNotFoundError } from './errors';
+import { Comment } from '../model/comment';
 
 @injectable()
 export default class TodoService {
@@ -19,7 +19,7 @@ export default class TodoService {
     ) {}
 
     public async getTodo(id: UUID): Promise<PersistedTodo> {
-        const todo = await this.provider.findOne(id);
+        const todo = await this.provider.findTodo(id);
 
         if (!todo) {
             throw new TodoNotFoundError(id);
@@ -29,19 +29,19 @@ export default class TodoService {
     }
 
     public getTodos(): Promise<PersistedTodo[]> {
-        return this.provider.findAll();
+        return this.provider.findTodos();
     }
 
     @logError()
     public async createTodo(label: string, done: boolean = false, tags: Tag[] = []): Promise<PersistedTodo> {
-        const todo: Todo = build({
+        const todo: Todo = buildTodo({
             label,
             done,
             tags,
         });
 
         try {
-            return await this.provider.create(todo);
+            return await this.provider.createTodo(todo);
         } catch (err) {
             if (err instanceof InvalidResourceError) {
                 err = new TodoInvalidError('Invalid data', err.errors);
@@ -64,7 +64,7 @@ export default class TodoService {
                 todo.tags = tags;
             }
 
-            return await this.provider.update(todo);
+            return await this.provider.updateTodo(todo);
         } catch (err) {
             if (err instanceof InvalidResourceError) {
                 err = new TodoInvalidError('Invalid data', err.errors);
@@ -75,6 +75,14 @@ export default class TodoService {
     }
 
     public async deleteTodo(todo: PersistedTodo): Promise<void> {
-        return this.provider.delete(todo);
+        return this.provider.deleteTodo(todo);
+    }
+
+    public async createTodoComment(todo: PersistedTodo, text: string): Promise<Comment> {
+        const comment: Comment = {
+            text,
+        };
+
+        return this.provider.createTodoComment(todo, comment);
     }
 }

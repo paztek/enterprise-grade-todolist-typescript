@@ -20,13 +20,14 @@ export default class TodosFeature extends Feature {
         // Register routes
         const router = Router({ mergeParams: true });
 
-        router.param('todoId', controller.fetch);
+        router.param('todoId', controller.fetchTodo);
 
-        router.get('/', asyncMiddleware(controller.index));
-        router.post('/', asyncMiddleware(controller.create));
-        router.get('/:todoId', asyncMiddleware(controller.read));
-        router.put('/:todoId', asyncMiddleware(controller.update));
-        router.delete('/:todoId', asyncMiddleware(controller.delete));
+        router.get('/', asyncMiddleware(controller.getTodos));
+        router.post('/', asyncMiddleware(controller.createTodo));
+        router.get('/:todoId', asyncMiddleware(controller.getTodo));
+        router.put('/:todoId', asyncMiddleware(controller.updateTodo));
+        router.delete('/:todoId', asyncMiddleware(controller.deleteTodo));
+        router.post('/:todoId/comments', asyncMiddleware(controller.createTodoComment));
 
         parentRouter.use('/todos', router);
 

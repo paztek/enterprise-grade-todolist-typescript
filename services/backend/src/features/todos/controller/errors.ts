@@ -10,3 +10,6 @@ export class TodoHTTPNotFoundError extends HTTPNotFoundError {
 
 export class TodoHTTPBadRequestError extends HTTPBadRequestError {
 }
+
+export class CommentHTTPBadRequestError extends HTTPBadRequestError {
+}

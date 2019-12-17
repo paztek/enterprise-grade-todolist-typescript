@@ -6,13 +6,12 @@ import { container } from 'tsyringe';
 
 import globalConfig from './config';
 import DBService from './db';
+import TagsFeature from './features/tags';
 import TodosFeature from './features/todos';
 import HTTPService from './http/service';
 import { FeaturesConfig } from './lib/feature';
 import Server from './lib/server';
 import logger from './logger';
-import CommentsFeature from './features/todos/comments';
-import TagsFeature from './features/tags';
 
 const { http, db } = globalConfig;
 
@@ -50,7 +49,7 @@ container.register('db', {
 const featuresConfig: FeaturesConfig = [
     {
         feature: TodosFeature,
-        children: [CommentsFeature],
+        children: [],
     },
     TagsFeature,
 ];

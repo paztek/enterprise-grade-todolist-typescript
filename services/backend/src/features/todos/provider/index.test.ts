@@ -2,15 +2,15 @@ import { expect } from 'chai';
 import { QueryTypes, Sequelize } from 'sequelize';
 import * as Sinon from 'sinon';
 import { container } from 'tsyringe';
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 
 import TodoProvider from '.';
 import globalConfig from '../../../config';
 import { UUID } from '../../../lib/utils/uuid';
 import logger from '../../../logger';
 import TagProvider from '../../tags/provider';
-import build from '../factory';
-import { Todo } from '../model';
+import { build as buildComment, Comment } from '../model/comment';
+import { build as buildTodo, Todo } from '../model/todo';
 
 const { db } = globalConfig;
 
@@ -51,79 +51,82 @@ describe('TodoProvider', () => {
         await sequelize.query(`INSERT INTO todos (id, label, done, created_at, updated_at) VALUES ('${id}', '${todo.label}', ${todo.done}, to_timestamp(${now}), to_timestamp(${now}))`);
     }
 
-    describe('findOne', () => {
+    async function insertComment(todoId: UUID, id: UUID, comment: Comment): Promise<any> {
+        const now = +new Date();
+        await sequelize.query(`INSERT INTO comments (id, text, created_at, updated_at, todo_id) VALUES ('${id}', '${comment.text}', to_timestamp(${now}), to_timestamp(${now}), '${todoId}')`);
+    }
 
-        it('should retrieve a todo with its tags', async () => {
-            const todo: Todo = build({ tags: ['foo', 'bar'] });
-            const id = uuid();
-            await insertTodo(id, todo);
+    describe('findTodo', () => {
+
+        it('should retrieve a todo with its tags and comments', async () => {
+            const todo = buildTodo({ tags: ['foo', 'bar'] });
+            const todoId = uuid();
+            await insertTodo(todoId, todo);
+            const comment = buildComment();
+            const commentId = uuid();
+            await insertComment(todoId, commentId, comment);
             tagProvider.getTags.resolves(todo.tags);
 
-            const todoFound = await provider.findOne(id);
+            const todoFound = await provider.findTodo(todoId);
 
             expect(todoFound).to.not.be.null;
-            expect(todoFound!.id).to.eq(id);
-            expect(todoFound!.tags.length).to.eq(2);
+            expect(todoFound!.id).to.eq(todoId);
+            expect(todoFound!.comments).to.have.lengthOf(1);
+            expect(todoFound!.tags).to.have.lengthOf(2);
         });
 
         it('should return null if todo not found', async () => {
             const id = uuid();
 
-            const todoFound = await provider.findOne(id);
+            const todoFound = await provider.findTodo(id);
 
             expect(todoFound).to.be.null;
         });
     });
 
-    describe('findAll', () => {
+    describe('findTodos', () => {
 
         it('should retrieve a list of todos with their tags', async () => {
             const todos: Todo[] = [
-                build({ label: 'Todo 1', tags: ['foo', 'bar'] }),
-                build({ label: 'Todo 2', tags: ['baz'] }),
+                buildTodo({ label: 'Todo 1', tags: ['foo', 'bar'] }),
+                buildTodo({ label: 'Todo 2', tags: ['baz'] }),
             ];
-            const ids = [
+            const todoIds = [
                 uuid(),
                 uuid(),
             ];
-            await Promise.all(todos.map((todo, index) => insertTodo(ids[index], todo)));
+            await Promise.all(todos.map(async (todo, index) => {
+                const todoId = todoIds[index];
+                await insertTodo(todoId, todo);
+                const comment = buildComment();
+                const commentId = uuid();
+                await insertComment(todoId, commentId, comment);
+            }));
             tagProvider.getTags.callsFake((id) => {
-                const index = ids.indexOf(id);
+                const index = todoIds.indexOf(id);
                 return Promise.resolve(todos[index].tags);
             });
 
-            const todosFound = await provider.findAll();
+            const todosFound = await provider.findTodos();
 
             expect(todosFound).to.have.lengthOf(todos.length);
+            expect(todosFound[0].comments).to.have.lengthOf(1);
             expect(todosFound[0].tags.sort()).to.eql(todos[0].tags.sort());
+            expect(todosFound[1].comments).to.have.lengthOf(1);
             expect(todosFound[1].tags.sort()).to.eql(todos[1].tags.sort());
         });
     });
 
-    describe('destroyAll', () => {
-
-        it('should remove all the todos', async () => {
-            const todos: Todo[] = [
-                build({ label: 'Todo 1', tags: ['foo', 'bar'] }),
-                build({ label: 'Todo 2', tags: ['baz'] }),
-            ];
-            await Promise.all(todos.map((todo) => insertTodo(uuid(), todo)));
-
-            const deletedCount = await provider.destroyAll();
-
-            expect(deletedCount).to.eq(todos.length);
-        });
-    });
-
-    describe('create', () => {
+    describe('createTodo', () => {
 
         it('should create and return a todo', async () => {
-            const todo = build({ label: 'My todo', tags: ['foo', 'bar'] });
+            const todo = buildTodo({ label: 'My todo', tags: ['foo', 'bar'] });
             tagProvider.setTags.resolves(todo.tags);
 
-            const todoCreated = await provider.create(todo);
+            const todoCreated = await provider.createTodo(todo);
 
             expect(todoCreated.id).to.not.be.undefined;
+            expect(todoCreated.comments).to.have.lengthOf(0);
             expect(todoCreated.tags).to.have.lengthOf(todo.tags.length);
 
             const rowsTodos = await sequelize.query('SELECT * FROM todos', { type: QueryTypes.SELECT });
@@ -131,25 +134,71 @@ describe('TodoProvider', () => {
         });
     });
 
-    describe('update', () => {
+    describe('updateTodo', () => {
 
         it('should update and return an existing todo', async () => {
-            const todo = build({ label: 'My todo', tags: ['foo', 'bar'] });
-            const id = uuid();
-            await insertTodo(id, todo);
+            const todo = buildTodo({ tags: ['foo', 'bar'] });
+            const todoId = uuid();
+            await insertTodo(todoId, todo);
+            const comment = buildComment();
+            const commentId = uuid();
+            await insertComment(todoId, commentId, comment);
 
             const todoToUpdate = {
                 ...todo,
-                id,
+                id: todoId,
                 label: 'My updated todo',
                 tags: ['baz'],
             };
             tagProvider.setTags.resolves(todoToUpdate.tags);
 
-            const todoUpdated = await provider.update(todoToUpdate);
+            const todoUpdated = await provider.updateTodo(todoToUpdate);
 
             expect(todoUpdated.label).to.eq(todoToUpdate.label);
+            expect(todoUpdated.comments).to.have.lengthOf(1);
             expect(todoUpdated.tags.sort()).to.eql(todoToUpdate.tags.sort());
+        });
+    });
+
+    describe('deleteTodo', () => {
+
+        it('should delete an existing todo', async () => {
+            const todo = buildTodo({ label: 'My todo', tags: ['foo', 'bar'] });
+            const todoId = uuid();
+            await insertTodo(todoId, todo);
+
+            const todoToDelete = {
+                ...todo,
+                id: todoId,
+            };
+
+            await provider.deleteTodo(todoToDelete);
+
+            const rowsTodos = await sequelize.query('SELECT * FROM todos', { type: QueryTypes.SELECT });
+            expect(rowsTodos).to.have.lengthOf(0);
+        });
+    });
+
+    describe('createTodoComment', () => {
+
+        const todo = buildTodo({ label: 'My todo', tags: ['foo', 'bar'] });
+        const todoId = uuid();
+
+        beforeEach(async () => {
+            await insertTodo(todoId, todo);
+        });
+
+        it('should add a comment to an existing todo', async () => {
+            const existingTodo = {
+                ...todo,
+                id: todoId,
+            };
+            const comment = buildComment();
+
+            const commentCreated = await provider.createTodoComment(existingTodo, comment);
+
+            expect(commentCreated.id).to.not.be.undefined;
+            expect(commentCreated.text).to.eq(comment.text);
         });
     });
 });

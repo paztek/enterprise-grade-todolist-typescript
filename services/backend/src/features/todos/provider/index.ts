@@ -14,9 +14,10 @@ import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
 import { Tag } from '../../tags/model';
 import TagProvider from '../../tags/provider';
-import { PersistedTodo, Todo } from '../model';
+import { PersistedTodo, Todo } from '../model/todo';
+import { Comment, PersistedComment } from '../model/comment';
 
-const modelMapping: ModelAttributes = {
+const todoModelMapping: ModelAttributes = {
     id: {
         primaryKey: true,
         type: DataTypes.UUID,
@@ -33,7 +34,7 @@ const modelMapping: ModelAttributes = {
     },
 };
 
-const modelOptions: ModelOptions = {
+const todoModelOptions: ModelOptions = {
     modelName: 'Todo',
     tableName: 'todos',
     underscored: true,
@@ -45,6 +46,33 @@ class TodoModel extends Model {
     public readonly done: boolean;
     public readonly createdAt: Date;
     public readonly updatedAt: Date;
+    public readonly comments: CommentModel[];
+}
+
+const commentModelMapping: ModelAttributes = {
+    id: {
+        primaryKey: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+    },
+    text: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+};
+
+const commentModelOptions: ModelOptions = {
+    modelName: 'Comment',
+    tableName: 'comments',
+    underscored: true,
+};
+
+export class CommentModel extends Model {
+    public readonly id: UUID;
+    public readonly text: string;
+    public readonly createdAt: Date;
+    public readonly updatedAt: Date;
+    public readonly todoId: TodoModel['id'];
 }
 
 @injectable()
@@ -58,14 +86,35 @@ export default class TodoProvider {
         logger.info('Initializing Sequelize model Todo');
 
         TodoModel.init(
-            modelMapping,
+            todoModelMapping,
             {
-                ...modelOptions,
+                ...todoModelOptions,
                 sequelize,
+                defaultScope: {
+                    include: [{ model: CommentModel, as: 'comments' }],
+                },
+            });
+
+        CommentModel.init(
+            commentModelMapping,
+            {
+                ...commentModelOptions,
+                sequelize,
+            });
+
+        TodoModel.hasMany(
+            CommentModel,
+            {
+                as: 'comments',
+                foreignKey: {
+                    name: 'todoId',
+                    field: 'todo_id'
+                },
+                onDelete: 'CASCADE',
             });
     }
 
-    public async findOne(id: UUID): Promise<PersistedTodo | null> {
+    public async findTodo(id: UUID): Promise<PersistedTodo | null> {
         const instance = await TodoModel.findByPk(id);
 
         if (!instance) {
@@ -74,34 +123,20 @@ export default class TodoProvider {
 
         const tags = await this.tagProvider.getTags(instance.id);
 
-        return this.convertInstanceToBusinessObject(instance, tags);
+        return this.convertTodoInstanceToTodo(instance, tags);
     }
 
-    public async findAll(): Promise<PersistedTodo[]> {
+    public async findTodos(): Promise<PersistedTodo[]> {
         const instances = await TodoModel.findAll();
 
         return Promise.all(instances.map(async (instance) => {
             const tags = await this.tagProvider.getTags(instance.id);
-            return this.convertInstanceToBusinessObject(instance, tags);
+            return this.convertTodoInstanceToTodo(instance, tags);
         }));
     }
 
-    public async destroyAll(): Promise<number> {
-        const instances = await TodoModel.findAll();
-
-        await Promise.all(instances.map(async (instance) => {
-            await this.tagProvider.removeTags(instance.id);
-            return instance.destroy();
-        }));
-
-        return instances.length;
-    }
-
-    public async create(todo: Todo): Promise<PersistedTodo> {
-        const attributes = {
-            label: todo.label,
-            done: todo.done,
-        };
+    public async createTodo(todo: Todo): Promise<PersistedTodo> {
+        const attributes = this.convertTodoToAttributes(todo);
 
         try {
             // Create instance
@@ -110,7 +145,7 @@ export default class TodoProvider {
             // Set tags
             const tags = await this.tagProvider.setTags(instance.id, todo.tags);
 
-            return this.convertInstanceToBusinessObject(instance, tags);
+            return this.convertTodoInstanceToTodo(instance, tags);
         } catch (err) {
             if (err instanceof ValidationError) {
                 err = new InvalidResourceError(err.message, err.errors);
@@ -120,15 +155,12 @@ export default class TodoProvider {
         }
     }
 
-    public async update(todo: PersistedTodo): Promise<PersistedTodo> {
+    public async updateTodo(todo: PersistedTodo): Promise<PersistedTodo> {
         const instance = await TodoModel.findByPk(todo.id, {
             rejectOnEmpty: true,
         });
 
-        const attributes = {
-            label: todo.label,
-            done: todo.done,
-        };
+        const attributes = this.convertTodoToAttributes(todo);
 
         try {
             // Update instance
@@ -138,7 +170,7 @@ export default class TodoProvider {
             // Set tags
             const tags = await this.tagProvider.setTags(instance.id, todo.tags);
 
-            return this.convertInstanceToBusinessObject(instance, tags);
+            return this.convertTodoInstanceToTodo(instance, tags);
         } catch (err) {
             if (err instanceof ValidationError) {
                 err = new InvalidResourceError(err.message, err.errors);
@@ -148,7 +180,7 @@ export default class TodoProvider {
         }
     }
 
-    public async delete(todo: PersistedTodo): Promise<void> {
+    public async deleteTodo(todo: PersistedTodo): Promise<void> {
         const instance = await TodoModel.findByPk(todo.id, {
             rejectOnEmpty: true,
         });
@@ -158,7 +190,30 @@ export default class TodoProvider {
         return instance.destroy();
     }
 
-    protected convertInstanceToBusinessObject(instance: TodoModel, tags: Tag[]): PersistedTodo {
+    public async createTodoComment(todo: PersistedTodo, comment: Comment): Promise<PersistedComment> {
+        const attributes = this.convertCommentToAttributes(todo, comment);
+
+        try {
+            const instance = await CommentModel.create(attributes);
+
+            return this.convertCommentInstanceToComment(instance);
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                err = new InvalidResourceError(err.message, err.errors);
+            }
+
+            throw err;
+        }
+    }
+
+    protected convertTodoToAttributes(todo: Todo) { // TODO Typings
+        return {
+            label: todo.label,
+            done: todo.done,
+        };
+    }
+
+    protected convertTodoInstanceToTodo(instance: TodoModel, tags: Tag[]): PersistedTodo {
         return {
             id: instance.id,
             label: instance.label,
@@ -166,6 +221,22 @@ export default class TodoProvider {
             createdAt: instance.createdAt,
             updatedAt: instance.updatedAt,
             tags,
+            comments: (instance.comments || []).map((commentInstance) =>
+                this.convertCommentInstanceToComment(commentInstance)),
+        };
+    }
+
+    protected convertCommentToAttributes(todo: Todo, comment: Comment) { // TODO Typings
+        return {
+            todoId: todo.id,
+            text: comment.text,
+        };
+    }
+
+    protected convertCommentInstanceToComment(instance: CommentModel): PersistedComment {
+        return {
+            id: instance.id,
+            text: instance.text,
         };
     }
 }

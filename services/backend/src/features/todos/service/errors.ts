@@ -1,5 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 import { UUID } from '../../../lib/utils/uuid';
+import { PersistedTodo } from '../model/todo';
 
 export class TodoNotFoundError extends Error {
 
@@ -13,6 +14,17 @@ export class TodoNotFoundError extends Error {
 export class TodoInvalidError extends Error {
 
     constructor(
+        message: string,
+        public readonly errors: IValidationErrorItem[],
+    ) {
+        super(message);
+    }
+}
+
+export class CommentInvalidError extends Error {
+
+    constructor(
+        public readonly todo: PersistedTodo,
         message: string,
         public readonly errors: IValidationErrorItem[],
     ) {
