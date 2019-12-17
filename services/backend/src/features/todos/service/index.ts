@@ -5,10 +5,10 @@ import { logError } from '../../../lib/utils/logging/error';
 import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
 import { Tag } from '../../tags/model';
+import { Comment, PersistedComment } from '../model/comment';
 import { build as buildTodo, PersistedTodo, Todo } from '../model/todo';
 import TodoProvider from '../provider';
-import { TodoInvalidError, TodoNotFoundError } from './errors';
-import { Comment } from '../model/comment';
+import { CommentInvalidError, TodoInvalidError, TodoNotFoundError } from './errors';
 
 @injectable()
 export default class TodoService {
@@ -44,7 +44,7 @@ export default class TodoService {
             return await this.provider.createTodo(todo);
         } catch (err) {
             if (err instanceof InvalidResourceError) {
-                err = new TodoInvalidError('Invalid data', err.errors);
+                err = new TodoInvalidError(err);
             }
 
             throw err;
@@ -67,7 +67,7 @@ export default class TodoService {
             return await this.provider.updateTodo(todo);
         } catch (err) {
             if (err instanceof InvalidResourceError) {
-                err = new TodoInvalidError('Invalid data', err.errors);
+                err = new TodoInvalidError(err);
             }
 
             throw err;
@@ -78,11 +78,19 @@ export default class TodoService {
         return this.provider.deleteTodo(todo);
     }
 
-    public async createTodoComment(todo: PersistedTodo, text: string): Promise<Comment> {
+    public async createTodoComment(todo: PersistedTodo, text: string): Promise<PersistedComment> {
         const comment: Comment = {
             text,
         };
 
-        return this.provider.createTodoComment(todo, comment);
+        try {
+            return await this.provider.createTodoComment(todo, comment);
+        } catch (err) {
+            if (err instanceof InvalidResourceError) {
+                err = new CommentInvalidError(err);
+            }
+
+            throw err;
+        }
     }
 }

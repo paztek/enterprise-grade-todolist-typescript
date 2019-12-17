@@ -14,8 +14,8 @@ import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
 import { Tag } from '../../tags/model';
 import TagProvider from '../../tags/provider';
-import { PersistedTodo, Todo } from '../model/todo';
 import { Comment, PersistedComment } from '../model/comment';
+import { PersistedTodo, Todo } from '../model/todo';
 
 const todoModelMapping: ModelAttributes = {
     id: {
@@ -148,7 +148,10 @@ export default class TodoProvider {
             return this.convertTodoInstanceToTodo(instance, tags);
         } catch (err) {
             if (err instanceof ValidationError) {
-                err = new InvalidResourceError(err.message, err.errors);
+                err = new InvalidResourceError({
+                    cause: err,
+                    info: err.errors,
+                }, 'Invalid resource');
             }
 
             throw err;
@@ -173,7 +176,10 @@ export default class TodoProvider {
             return this.convertTodoInstanceToTodo(instance, tags);
         } catch (err) {
             if (err instanceof ValidationError) {
-                err = new InvalidResourceError(err.message, err.errors);
+                err = new InvalidResourceError({
+                    cause: err,
+                    info: err.errors,
+                }, 'Invalid resource');
             }
 
             throw err;
@@ -199,7 +205,10 @@ export default class TodoProvider {
             return this.convertCommentInstanceToComment(instance);
         } catch (err) {
             if (err instanceof ValidationError) {
-                err = new InvalidResourceError(err.message, err.errors);
+                err = new InvalidResourceError({
+                    cause: err,
+                    info: err.errors,
+                }, 'Invalid resource');
             }
 
             throw err;

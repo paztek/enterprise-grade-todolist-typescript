@@ -70,7 +70,7 @@ export default class TodoController {
             return res.status(201).json(todo);
         } catch (err) {
             if (err instanceof TodoInvalidError) {
-                err = new TodoHTTPBadRequestError(err.message, err.errors);
+                err = new TodoHTTPBadRequestError(err);
             }
 
             throw err;
@@ -93,7 +93,7 @@ export default class TodoController {
             return res.status(200).json(todo);
         } catch (err) {
             if (err instanceof TodoInvalidError) {
-                err = new TodoHTTPBadRequestError(err.message, err.errors);
+                err = new TodoHTTPBadRequestError(err);
             }
 
             throw err;
@@ -118,7 +118,7 @@ export default class TodoController {
             return res.status(201).json(comment);
         } catch (err) {
             if (err instanceof CommentInvalidError) {
-                err = new CommentHTTPBadRequestError(err.message, err.errors);
+                err = new CommentHTTPBadRequestError(err);
             }
 
             throw err;

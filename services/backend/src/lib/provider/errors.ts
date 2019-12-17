@@ -1,9 +1,10 @@
 /* tslint:disable:max-classes-per-file */
 import * as _ from 'lodash';
+import VError from 'verror';
 
 import { UUID } from '../utils/uuid';
 
-export class ResourceNotFoundError extends Error {
+export class ResourceNotFoundError extends VError {
 
     constructor(id: UUID) {
         const message = `Resource with ID ${id} not found`;
@@ -11,7 +12,10 @@ export class ResourceNotFoundError extends Error {
     }
 }
 
-export class InvalidResourceError extends Error {
+export class InvalidResourceError extends VError {}
+
+/*
+export class InvalidResourceError extends VError {
 
     public readonly errors: IValidationErrorItem[];
 
@@ -25,6 +29,7 @@ export class InvalidResourceError extends Error {
         this.errors = errors.map((error) => _.pick(error, ['message', 'type', 'path', 'value']));
     }
 }
+ */
 
 interface IValidationErrorItem {
 

@@ -1,12 +1,12 @@
 /* tslint:disable:max-classes-per-file */
 import bodyParser from 'body-parser';
-import express, { Express, IRouter, NextFunction, Request, Response, Router } from 'express';
+import express, { Express, NextFunction, Request, Response, Router } from 'express';
 import http, {Server} from 'http';
 import morgan from 'morgan';
 import { container, inject, injectable } from 'tsyringe';
 
 import globalConfig from '../config';
-import { HTTPError } from '../lib/http/errors';
+import { HTTPError, HTTPNotFoundError } from '../lib/http/errors';
 import Service, { IService } from '../lib/service';
 import { ILogger } from '../logger';
 
@@ -14,7 +14,6 @@ const { environment } = globalConfig;
 
 // tslint:disable-next-line:no-empty-interface
 export interface IHTTPService extends IService {
-    //mount(parentRouter: IRouter, path: string, router: IRouter): void;
 }
 
 @injectable()
@@ -42,7 +41,7 @@ export default class HTTPService extends Service implements IHTTPService {
 
         // Catch 404 and forward to error handler
         this.app.use(() => {
-            throw new HTTPError(404, 'Not Found');
+            throw new HTTPNotFoundError();
         });
 
         // Error handler
@@ -57,7 +56,7 @@ export default class HTTPService extends Service implements IHTTPService {
             const data = {
                 status,
                 message: err.message,
-                content: err.content,
+                content: err.info,
                 stack,
             };
 

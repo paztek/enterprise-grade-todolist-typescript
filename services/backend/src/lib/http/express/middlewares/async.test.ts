@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import { agent, SuperTest, Test } from 'supertest';
 
 import asyncMiddleware from './async';
+import { HTTPInternalServerError } from '../../errors';
 
 describe('Async middleware wrapper', () => {
 
@@ -16,7 +17,7 @@ describe('Async middleware wrapper', () => {
     });
 
     it('should call next() with the error if the promise is rejected', async () => {
-        const error = new Error('fail');
+        const error = new HTTPInternalServerError();
         const handler = function handle(req: Request, res: Response, next: NextFunction) {
             return Promise.reject(error);
         };

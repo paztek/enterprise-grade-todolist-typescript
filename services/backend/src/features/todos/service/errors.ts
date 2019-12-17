@@ -1,48 +1,27 @@
 /* tslint:disable:max-classes-per-file */
-import { UUID } from '../../../lib/utils/uuid';
-import { PersistedTodo } from '../model/todo';
+import VError from 'verror';
 
-export class TodoNotFoundError extends Error {
+import { UUID } from '../../../lib/utils/uuid';
+
+export class TodoNotFoundError extends VError {
 
     constructor(
         public readonly todoId: UUID,
     ) {
-        super(`Todo ${todoId} not found`);
+        super({ info: { id: todoId } }, `Todo ${todoId} not found`);
     }
 }
 
-export class TodoInvalidError extends Error {
+export class TodoInvalidError extends VError {
 
-    constructor(
-        message: string,
-        public readonly errors: IValidationErrorItem[],
-    ) {
-        super(message);
+    constructor(cause: Error) {
+        super({ cause }, 'Invalid todo');
     }
 }
 
-export class CommentInvalidError extends Error {
+export class CommentInvalidError extends VError {
 
-    constructor(
-        public readonly todo: PersistedTodo,
-        message: string,
-        public readonly errors: IValidationErrorItem[],
-    ) {
-        super(message);
+    constructor(cause: Error) {
+        super({ cause }, 'Invalid comment');
     }
-}
-
-interface IValidationErrorItem {
-
-    /** An error message */
-    message: string;
-
-    /** The type of the validation error */
-    type: string;
-
-    /** The field that triggered the validation error */
-    path: string;
-
-    /** The value that generated the error */
-    value: string;
 }

@@ -11,6 +11,7 @@ import logger from '../../../logger';
 import TagProvider from '../../tags/provider';
 import { build as buildComment, Comment } from '../model/comment';
 import { build as buildTodo, Todo } from '../model/todo';
+import { InvalidResourceError } from '../../../lib/provider/errors';
 
 const { db } = globalConfig;
 
@@ -131,6 +132,14 @@ describe('TodoProvider', () => {
 
             const rowsTodos = await sequelize.query('SELECT * FROM todos', { type: QueryTypes.SELECT });
             expect(rowsTodos).to.have.lengthOf(1);
+        });
+
+        it('should throw an error if todo is invalid', async () => {
+            const todo = buildTodo();
+            // @ts-ignore
+            todo.label = null;
+
+            expect(provider.createTodo(todo)).to.eventually.be.rejectedWith(InvalidResourceError);
         });
     });
 
