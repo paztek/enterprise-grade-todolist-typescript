@@ -4,7 +4,7 @@ import { InvalidResourceError } from '../../../lib/provider/errors';
 import { logError } from '../../../lib/utils/logging/error';
 import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
-import { Tag } from '../../tags/model';
+import { Tag } from '../../tags/model/model';
 import { Comment, PersistedComment } from '../model/comment';
 import { build as buildTodo, PersistedTodo, Todo } from '../model/todo';
 import TodoProvider from '../provider';

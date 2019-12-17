@@ -3,14 +3,10 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
 import { UUID } from '../../../lib/utils/uuid';
-import { PersistedTodo, Todo } from '../model/todo';
 import TodoService from '../service';
 import { CommentInvalidError, TodoInvalidError } from '../service/errors';
 import { CommentHTTPBadRequestError, TodoHTTPBadRequestError, TodoHTTPNotFoundError } from './errors';
-
-interface ITodoRequest extends Request {
-    todo: PersistedTodo;
-}
+import { ITodoRequest } from './fetch.middleware';
 
 interface ITodoCreateRequest extends Request {
     body: {

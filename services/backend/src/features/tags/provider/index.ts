@@ -11,7 +11,7 @@ import { inject, injectable } from 'tsyringe';
 
 import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
-import { Tag } from '../model';
+import { Tag } from '../model/tag';
 
 const modelAttributes: ModelAttributes = {
     taggableId: {

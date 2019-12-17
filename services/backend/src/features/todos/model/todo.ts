@@ -1,6 +1,6 @@
 import { Persisted } from '../../../lib/provider/persisted';
 import { UUID } from '../../../lib/utils/uuid';
-import { Taggable } from '../../tags/model';
+import { Taggable } from '../../tags/model/tag';
 import { Commentable } from './comment';
 
 // tslint:disable-next-line:interface-name

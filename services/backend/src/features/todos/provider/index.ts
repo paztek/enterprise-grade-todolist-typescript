@@ -12,7 +12,7 @@ import { inject, injectable } from 'tsyringe';
 import { InvalidResourceError } from '../../../lib/provider/errors';
 import { UUID } from '../../../lib/utils/uuid';
 import { ILogger } from '../../../logger';
-import { Tag } from '../../tags/model';
+import { Tag } from '../../tags/model/tag';
 import TagProvider from '../../tags/provider';
 import { Comment, PersistedComment } from '../model/comment';
 import { PersistedTodo, Todo } from '../model/todo';
