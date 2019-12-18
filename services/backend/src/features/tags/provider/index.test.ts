@@ -7,7 +7,7 @@ import TagProvider from '.';
 import globalConfig from '../../../config';
 import { UUID } from '../../../lib/utils/uuid';
 import logger from '../../../logger';
-import { Tag } from '../model/model';
+import { Tag } from '../model/tag';
 
 const { db } = globalConfig;
 

@@ -4,6 +4,7 @@ import { Sequelize } from 'sequelize';
 import request from 'supertest';
 import { container } from 'tsyringe';
 
+import AuthenticationService from '../../authentication/service';
 import globalConfig from '../../config';
 import DBService from '../../db';
 import HTTPService from '../../http/service';
@@ -46,6 +47,9 @@ describe('Todos E2E', () => {
     });
     container.register('db', {
         useClass: DBService,
+    });
+    container.register('auth', {
+        useClass: AuthenticationService,
     });
 
     // Features
