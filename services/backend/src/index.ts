@@ -10,6 +10,7 @@ import TagsFeature from './features/tags';
 import TodosFeature from './features/todos';
 import HTTPService from './http/service';
 import { FeaturesConfig } from './lib/feature';
+import AuthenticationProvider from './lib/security/provider';
 import Server from './lib/server';
 import logger from './logger';
 
@@ -43,6 +44,10 @@ container.register('http', {
 });
 container.register('db', {
     useClass: DBService,
+});
+
+container.register('authentication_provider', {
+    useClass: AuthenticationProvider,
 });
 
 // Features

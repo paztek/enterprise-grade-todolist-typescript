@@ -6,7 +6,7 @@ export enum HTTPStatus {
     Created = 201,
     NoContent = 204,
     BadRequest = 400,
-    Unauthorize = 401,
+    Unauthorized = 401,
     Forbidden = 403,
     NotFound = 404,
     InternalServerError = 500,
@@ -42,5 +42,12 @@ export class HTTPBadRequestError extends HTTPError {
 
     constructor(cause?: Error, content?: any) {
         super(HTTPStatus.BadRequest, 'Bad Request', cause, content);
+    }
+}
+
+export class HTTPUnauthorizedError extends HTTPError {
+
+    constructor(cause?: Error, content?: any) {
+        super(HTTPStatus.Unauthorized, 'Unauthorized', cause, content);
     }
 }

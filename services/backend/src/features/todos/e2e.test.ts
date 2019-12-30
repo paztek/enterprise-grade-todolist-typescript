@@ -4,11 +4,12 @@ import { Sequelize } from 'sequelize';
 import request from 'supertest';
 import { container } from 'tsyringe';
 
-import AuthenticationService from '../../authentication/service';
+import authenticateFactory from '../../../test/helpers/authenticate';
 import globalConfig from '../../config';
 import DBService from '../../db';
 import HTTPService from '../../http/service';
 import { FeaturesConfig } from '../../lib/feature';
+import AuthenticationProvider from '../../lib/security/provider';
 import logger from '../../logger';
 import Server from '../../server';
 import TagsFeature from '../tags';
@@ -48,8 +49,9 @@ describe('Todos E2E', () => {
     container.register('db', {
         useClass: DBService,
     });
-    container.register('auth', {
-        useClass: AuthenticationService,
+
+    container.register('authentication_provider', {
+        useClass: AuthenticationProvider,
     });
 
     // Features
@@ -63,6 +65,10 @@ describe('Todos E2E', () => {
 
     const todoProvider = container.resolve(TodoProvider);
 
+    const token = 'AZERTYUIOP';
+
+    const authenticate = authenticateFactory(token);
+
     before('start server', () => server.start());
 
     after('close server', () => server.stop());
@@ -74,14 +80,28 @@ describe('Todos E2E', () => {
 
     describe('GET /todos', () => {
 
+        it('should return a HTTP 401 if user is not authenticated', async () => {
+            const response = await request(app)
+                .get('/todos');
+
+            expect(response.status).to.eq(401);
+        });
+
+        it('should return a HTTP 200 if user is authenticated', async () => {
+            const response = await authenticate(request(app)
+                .get('/todos'));
+
+            expect(response.status).to.eq(200);
+        });
+
         it('should return a HTTP 200 with the todos', async () => {
             const todo1 = buildTodo({ label: 'Todo 1' });
             await todoProvider.createTodo(todo1);
             const todo2 = buildTodo({ label: 'Todo 2' });
             await todoProvider.createTodo(todo2);
 
-            const response = await request(app)
-                .get('/todos');
+            const response = await authenticate(request(app)
+                .get('/todos'));
 
             expect(response.status).to.eq(200);
             expect(response.body).to.have.lengthOf(2);
@@ -95,9 +115,9 @@ describe('Todos E2E', () => {
                 label: null,
             };
 
-            const response = await request(app)
+            const response = await authenticate(request(app)
                 .post('/todos')
-                .send(data);
+                .send(data));
 
             expect(response.status).to.eq(400);
             expect(response.body.message).to.not.be.undefined;
@@ -109,9 +129,9 @@ describe('Todos E2E', () => {
                 tags: ['foo', 'bar'],
             };
 
-            const response = await request(app)
+            const response = await authenticate(request(app)
                 .post('/todos')
-                .send(data);
+                .send(data));
 
             expect(response.status).to.eq(201);
             expect(response.body.id).to.not.be.undefined;
@@ -128,8 +148,8 @@ describe('Todos E2E', () => {
             const comment = buildComment();
             const commentCreated = await todoProvider.createTodoComment(todoCreated, comment);
 
-            const response = await request(app)
-                .get(`/todos/${todoCreated.id}`);
+            const response = await authenticate(request(app)
+                .get(`/todos/${todoCreated.id}`));
 
             expect(response.status).to.eq(200);
             expect(response.body.id).to.eq(todoCreated.id);
@@ -151,9 +171,9 @@ describe('Todos E2E', () => {
                 label: null,
             };
 
-            const response = await request(app)
+            const response = await authenticate(request(app)
                 .put(`/todos/${todoCreated.id}`)
-                .send(data);
+                .send(data));
 
             expect(response.status).to.eq(400);
             expect(response.body.message).to.not.be.undefined;
@@ -170,9 +190,9 @@ describe('Todos E2E', () => {
                 tags: ['baz', 'foo'],
             };
 
-            const response = await request(app)
+            const response = await authenticate(request(app)
                 .put(`/todos/${todoCreated.id}`)
-                .send(data);
+                .send(data));
 
             expect(response.status).to.eq(200);
             expect(response.body.done).to.eq(true);
@@ -189,8 +209,8 @@ describe('Todos E2E', () => {
             const todo = buildTodo();
             const todoCreated = await todoProvider.createTodo(todo);
 
-            const response = await request(app)
-                .del(`/todos/${todoCreated.id}`);
+            const response = await authenticate(request(app)
+                .del(`/todos/${todoCreated.id}`));
 
             expect(response.status).to.eq(204);
             expect(response.body).to.be.empty;
@@ -207,9 +227,9 @@ describe('Todos E2E', () => {
                 text: 'My comment',
             };
 
-            const response = await request(app)
+            const response = await authenticate(request(app)
                 .post(`/todos/${todoCreated.id}/comments`)
-                .send(data);
+                .send(data));
 
             expect(response.status).to.eq(201);
             expect(response.body.id).to.not.be.undefined;

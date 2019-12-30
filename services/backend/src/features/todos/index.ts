@@ -3,6 +3,8 @@ import { container, inject, injectable } from 'tsyringe';
 
 import { Feature } from '../../lib/feature';
 import asyncMiddleware from '../../lib/http/express/middlewares/async';
+import authenticate from '../../lib/security/authenticate';
+import { IAuthenticationProvider } from '../../lib/security/provider';
 import { ILogger } from '../../logger';
 import TodoController from './controller';
 
@@ -12,6 +14,7 @@ export default class TodosFeature extends Feature {
     constructor(
         @inject('logger') private readonly logger: ILogger,
         @inject('/') parentRouter: Router,
+        @inject('authentication_provider') authProvider: IAuthenticationProvider,
     ) {
         super();
 
@@ -29,7 +32,7 @@ export default class TodosFeature extends Feature {
         router.delete('/:todoId', asyncMiddleware(controller.deleteTodo));
         router.post('/:todoId/comments', asyncMiddleware(controller.createTodoComment));
 
-        parentRouter.use('/todos', router);
+        parentRouter.use('/todos', asyncMiddleware(authenticate(authProvider)), router);
 
         // Register the router so that other features can mount nested routers
         container.register('/todos', {
